@@ -860,7 +860,7 @@ Camera:
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 34
-  orthographic: 1
+  orthographic: 0
   orthographic size: 5
   m_Depth: -1
   m_CullingMask:
@@ -885,13 +885,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -10}
+  m_LocalRotation: {x: 0.25000006, y: 0.25000006, z: -0.06698733, w: 0.9330127}
+  m_LocalPosition: {x: -5.47, y: 7.63, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 30, y: 30, z: 0}
 --- !u!135 &600761576
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -997,6 +997,54 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &621042641 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &621042642 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &621042643
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 621042641}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 239e15e6f71ac6f40bbf16a1cac27a0c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  teacherRoot: {fileID: 621042642}
+  animator: {fileID: 621042644}
+  animatorLayer: 0
+  animatorStateName: Idle_Stand
+--- !u!95 &621042644
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 621042641}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 0}
+  m_CullingMode: 0
+  m_UpdateMode: 1
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!153 &636671773
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -2932,12 +2980,28 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 3644e0f051213f04dba6cad475127439, type: 3}
       propertyPath: m_Name
-      value: SpiderMonkeyStudent
+      value: SpiderMonkeyTeacher
       objectReference: {fileID: 0}
+    - target: {fileID: 8348114071825348447, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 45575fae81dafd940b97672ac28201ec, type: 2}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: -7703705806790764321, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+    - {fileID: 7384049249204627443, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+    - {fileID: -4228757484870168462, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+    - {fileID: -4178374997137560854, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+    - {fileID: -5048381863348783069, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+    - {fileID: -5152329597817943209, guid: 3644e0f051213f04dba6cad475127439, type: 3}
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 621042643}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 621042644}
   m_SourcePrefab: {fileID: 100100000, guid: 3644e0f051213f04dba6cad475127439, type: 3}
 --- !u!153 &1483355541
 ConfigurableJoint:
@@ -3738,7 +3802,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 3644e0f051213f04dba6cad475127439, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -4.56
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 3644e0f051213f04dba6cad475127439, type: 3}
       propertyPath: m_LocalPosition.y
@@ -3806,7 +3870,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 3644e0f051213f04dba6cad475127439, type: 3}
       propertyPath: m_Name
-      value: SpiderMonkeyGhost
+      value: SpiderMonkeyStudent
       objectReference: {fileID: 0}
     - target: {fileID: 1337400985622894037, guid: 3644e0f051213f04dba6cad475127439, type: 3}
       propertyPath: m_LocalRotation.w
@@ -3876,7 +3940,25 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3644e0f051213f04dba6cad475127439, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 2130072236}
+      addedObject: {fileID: 2130072244}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2130072243}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2130072242}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2130072241}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2130072240}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2130072239}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2130072238}
     - targetCorrespondingSourceObject: {fileID: -3608374456376225629, guid: 3644e0f051213f04dba6cad475127439, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2124933617}
@@ -4600,34 +4682,291 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.001
   m_Center: {x: 0, y: 0, z: 0}
---- !u!95 &2130072236
-Animator:
-  serializedVersion: 7
+--- !u!114 &2130072238
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2124933586}
   m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
-  m_CullingMode: 0
-  m_UpdateMode: 1
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d1c4e0b1822b495aa52bc52839ecb30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.ML-Agents::Unity.MLAgents.Policies.BehaviorParameters
+  m_BrainParameters:
+    VectorObservationSize: 1
+    NumStackedVectorObservations: 1
+    m_ActionSpec:
+      m_NumContinuousActions: 64
+      BranchSizes: 
+    VectorActionSize: 40000000
+    VectorActionDescriptions: []
+    VectorActionSpaceType: 1
+    hasUpgradedBrainParametersWithActionSpec: 1
+  m_Model: {fileID: 0}
+  m_InferenceDevice: 0
+  m_BehaviorType: 0
+  m_BehaviorName: MonkeyImitation
+  TeamId: 0
+  m_UseChildSensors: 1
+  m_UseChildActuators: 1
+  m_ObservableAttributeHandling: 0
+--- !u!114 &2130072239
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2124933586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88b6042bc9a5d4aa58d931eae49442e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.ML-Agents::Unity.MLAgents.Agent
+  agentParameters:
+    maxStep: 0
+  hasUpgradedFromAgentParameters: 1
+  MaxStep: 0
+--- !u!114 &2130072240
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2124933586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a5c9d521e5ef4759a8246a07d52221e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.ML-Agents::Unity.MLAgents.DecisionRequester
+  DecisionPeriod: 5
+  TakeActionsBetweenDecisions: 1
+--- !u!114 &2130072241
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2124933586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 000a78464338f374096afd9dcec4bbb0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StudentJointController
+  studentRoot: {fileID: 2130072245}
+  teacher: {fileID: 621042643}
+  autoDetectJoints: 1
+  bindings: []
+  hingeMaxOffsetDeg: 20
+  ballMaxOffsetDeg: 10
+  autoConfigureJointDrives: 1
+  jointDriveSpring: 1500
+  jointDriveDamper: 80
+  jointDriveMaxForce: 1000
+  forceZeroActions: 0
+--- !u!114 &2130072242
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2124933586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867a3107394acbf49903d704952fc29c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AutoActionSpecSizer
+  controller: {fileID: 2130072241}
+  behaviorParameters: {fileID: 2130072244}
+  applyInEditor: 1
+  rebuildBindingsInEditor: 1
+  autoSetVectorObservationSize: 1
+  baseObservationFloats: 12
+  perBindingObservationFloats: 8
+--- !u!114 &2130072243
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2124933586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87ed9ac5ff3d4064d92227ae71c1749a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ImitationAgent
+  agentParameters:
+    maxStep: 0
+  hasUpgradedFromAgentParameters: 1
+  MaxStep: 0
+  teacher: {fileID: 621042643}
+  controller: {fileID: 2130072241}
+  studentReferenceFrameOverride: {fileID: 0}
+  studentReferenceRigidbodyOverride: {fileID: 0}
+  teacherReferenceFrameOverride: {fileID: 0}
+  referenceBoneNameCandidates:
+  - pelvis
+  - Pelvis
+  - hips
+  - Hips
+  - hip
+  - Hip
+  - spine
+  - Spine
+  - spine_01
+  - Spine_01
+  - chest
+  - Chest
+  - root
+  - Root
+  handLeftNameCandidates:
+  - hand_L
+  - Hand_L
+  - leftHand
+  - LeftHand
+  - L_Hand
+  - Hand.L
+  handRightNameCandidates:
+  - hand_R
+  - Hand_R
+  - rightHand
+  - RightHand
+  - R_Hand
+  - Hand.R
+  footLeftNameCandidates:
+  - foot_L
+  - Foot_L
+  - leftFoot
+  - LeftFoot
+  - L_Foot
+  - Foot.L
+  footRightNameCandidates:
+  - foot_R
+  - Foot_R
+  - rightFoot
+  - RightFoot
+  - R_Foot
+  - Foot.R
+  pelvisNameCandidates:
+  - Pelvis
+  - pelvis
+  - Hips
+  - hips
+  - Hip
+  - hip
+  headNameCandidates:
+  - Head
+  - head
+  chestNameCandidates:
+  - Chest
+  - chest
+  spineNameCandidates:
+  - Spine
+  - spine
+  - spine_01
+  - Spine_01
+  upperLegLeftNameCandidates:
+  - UpperLeg.L
+  - UpperLeg_L
+  - UpperLegLeft
+  - UpperLegL
+  upperLegRightNameCandidates:
+  - UpperLeg.R
+  - UpperLeg_R
+  - UpperLegRight
+  - UpperLegR
+  clavicleLeftNameCandidates:
+  - Clavicle.L
+  - Clavicle_L
+  - ClavicleLeft
+  - ClavicleL
+  clavicleRightNameCandidates:
+  - Clavicle.R
+  - Clavicle_R
+  - ClavicleRight
+  - ClavicleR
+  studentReferenceFrame: {fileID: 0}
+  studentReferenceRb: {fileID: 0}
+  teacherReferenceFrame: {fileID: 0}
+  studentHandL: {fileID: 0}
+  studentHandR: {fileID: 0}
+  studentFootL: {fileID: 0}
+  studentFootR: {fileID: 0}
+  studentPelvis: {fileID: 0}
+  studentHead: {fileID: 0}
+  studentChest: {fileID: 0}
+  studentSpine: {fileID: 0}
+  studentUpperLegL: {fileID: 0}
+  studentUpperLegR: {fileID: 0}
+  studentClavicleL: {fileID: 0}
+  studentClavicleR: {fileID: 0}
+  wRot: 0.7
+  wPos: 0.25
+  wRootPos: 0.05
+  wUpright: 0.15
+  wHeight: 0.1
+  aliveReward: 0.001
+  actionL2Penalty: 0
+  actionDeltaL2Penalty: 0
+  motionL2Penalty: 0
+  kRot: 12
+  kPos: 25
+  kRootPos: 10
+  kUpright: 6
+  kHeight: 10
+  minPelvisHeight: 0.2
+  minUprightDot: 0.5
+  maxTippedTime: 1
+  maxEpisodeSeconds: 2
+  snapStudentToTeacherOnReset: 1
+  randomizeTeacherPhaseOnReset: 0
+  applyRandomImpulseOnReset: 1
+  resetImpulseStrength: 6
+  resetImpulseVerticalMix: 0.1
+  logFirstObservationSnapshot: 1
+  logFirstObservationEachEpisode: 0
+--- !u!114 &2130072244
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2124933586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d1c4e0b1822b495aa52bc52839ecb30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.ML-Agents::Unity.MLAgents.Policies.BehaviorParameters
+  m_BrainParameters:
+    VectorObservationSize: 12
+    NumStackedVectorObservations: 1
+    m_ActionSpec:
+      m_NumContinuousActions: 64
+      BranchSizes: 
+    VectorActionSize: 40000000
+    VectorActionDescriptions: []
+    VectorActionSpaceType: 1
+    hasUpgradedBrainParametersWithActionSpec: 1
+  m_Model: {fileID: 0}
+  m_InferenceDevice: 0
+  m_BehaviorType: 0
+  m_BehaviorName: MonkeyImitation
+  TeamId: 0
+  m_UseChildSensors: 1
+  m_UseChildActuators: 1
+  m_ObservableAttributeHandling: 0
+--- !u!4 &2130072245 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 519420032}
   - {fileID: 619394802}
-  - {fileID: 2124933585}
   - {fileID: 1423193515}
+  - {fileID: 2124933585}
   - {fileID: 863890196}
