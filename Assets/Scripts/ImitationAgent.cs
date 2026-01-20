@@ -22,6 +22,9 @@ public class ImitationAgent : Agent
     [Tooltip("Optional override for the teacher reference frame transform (used for position error frame).")]
     public Transform teacherReferenceFrameOverride;
 
+    [Tooltip("If true, chooses reference frames from rigidbodies/bindings instead of relying on specific bone names. Recommended when skeleton names change.")]
+    public bool skeletonAgnosticReferenceFrames = true;
+
     [Tooltip("Bone name candidates (first match wins) used to find a reference frame when no pelvis exists.")]
     public string[] referenceBoneNameCandidates =
     {
@@ -40,6 +43,12 @@ public class ImitationAgent : Agent
     public string[] footLeftNameCandidates = { "Foot.L", "Foot_L", "foot_L", "leftFoot", "LeftFoot", "L_Foot" };
     [Tooltip("Candidates for the RIGHT foot bone name.")]
     public string[] footRightNameCandidates = { "Foot.R", "Foot_R", "foot_R", "rightFoot", "RightFoot", "R_Foot" };
+
+    [Header("Additional effectors (improves arms/head alignment)")]
+    [Tooltip("Candidates for the LEFT elbow/forearm bone name (used for extra end-effector position reward).")]
+    public string[] elbowLeftNameCandidates = { "Elbow.L", "Elbow_L", "elbow_L", "LowerArm.L", "LowerArm_L", "Forearm.L", "Forearm_L" };
+    [Tooltip("Candidates for the RIGHT elbow/forearm bone name (used for extra end-effector position reward).")]
+    public string[] elbowRightNameCandidates = { "Elbow.R", "Elbow_R", "elbow_R", "LowerArm.R", "LowerArm_R", "Forearm.R", "Forearm_R" };
 
     [Header("Upright/height bones (recommended)")]
     [Tooltip("Candidates for the pelvis/hips bone name (used for fall detection + height reward).")]
@@ -64,6 +73,8 @@ public class ImitationAgent : Agent
     [SerializeField] Transform studentHandR;
     [SerializeField] Transform studentFootL;
     [SerializeField] Transform studentFootR;
+    [SerializeField] Transform studentElbowL;
+    [SerializeField] Transform studentElbowR;
     [SerializeField] Transform studentPelvis;
     [SerializeField] Transform studentHead;
     [SerializeField] Transform studentChest;
@@ -73,12 +84,29 @@ public class ImitationAgent : Agent
     [SerializeField] Transform studentClavicleL;
     [SerializeField] Transform studentClavicleR;
     Transform _teacherHandL, _teacherHandR, _teacherFootL, _teacherFootR;
+    Transform _teacherElbowL, _teacherElbowR;
     Transform _teacherPelvis, _teacherHead;
     Transform _teacherChest, _teacherSpine;
 
     [Header("Reward weights")]
     public float wRot = 0.7f;
     public float wPos = 0.25f;
+
+    [Tooltip("Weight for per-bone position tracking (all bound bones). This pushes full-skeleton alignment, not just end-effectors.")]
+    public float wBonePos = 0.20f;
+
+    [Tooltip("Weight for per-bone rotation tracking (all bound bones, frame-relative). This pushes full-skeleton rotation alignment.")]
+    public float wBoneRot = 0.35f;
+
+    [Header("Bone-local cost-only reward")]
+    [Tooltip("Scale applied to the mean per-bone WORLD-position squared error.")]
+    public float boneLocalPosCostScale = 5.0f;
+
+    [Tooltip("Scale applied to the mean per-bone local-rotation squared error (radians^2).")]
+    public float boneLocalRotCostScale = 1.0f;
+
+    [Tooltip("Overall scale applied to -(posCost + rotCost). Increase if rewards are too close to 0.")]
+    public float costToRewardScale = 1.0f;
 
     [Tooltip("Weight for root/reference-frame position tracking.")]
     public float wRootPos = 0.05f;
@@ -89,8 +117,52 @@ public class ImitationAgent : Agent
     [Tooltip("Weight for matching reference-frame height (helps avoid collapsing).")]
     public float wHeight = 0.10f;
 
+    [Header("Per-effector position weights")]
+    [Tooltip("Relative weight for hand position tracking inside the end-effector position reward.")]
+    public float posWeightHands = 2.0f;
+    [Tooltip("Relative weight for foot position tracking inside the end-effector position reward.")]
+    public float posWeightFeet = 1.0f;
+    [Tooltip("Relative weight for head position tracking inside the end-effector position reward.")]
+    public float posWeightHead = 1.5f;
+    [Tooltip("Relative weight for elbow/forearm position tracking inside the end-effector position reward.")]
+    public float posWeightElbows = 1.25f;
+
+    [Header("Per-joint rotation weighting")]
+    [Tooltip("Default weight for a joint when computing rotation error.")]
+    public float rotWeightDefault = 1.0f;
+    [Tooltip("Multiplier applied to arm joints (clavicle/shoulder/upperarm/lowerarm/hand).")]
+    public float rotWeightArms = 2.0f;
+    [Tooltip("Multiplier applied to head/neck joints.")]
+    public float rotWeightHead = 2.0f;
+    [Tooltip("Multiplier applied to torso joints (spine/chest).")]
+    public float rotWeightTorso = 1.5f;
+
+    [Header("Per-bone position weighting")]
+    [Tooltip("Default weight for a bone when computing per-bone position error.")]
+    public float bonePosWeightDefault = 1.0f;
+    [Tooltip("Multiplier applied to arm bones for per-bone position error.")]
+    public float bonePosWeightArms = 2.0f;
+    [Tooltip("Multiplier applied to head/neck bones for per-bone position error.")]
+    public float bonePosWeightHead = 6.0f;
+    [Tooltip("Multiplier applied to torso bones for per-bone position error.")]
+    public float bonePosWeightTorso = 1.5f;
+
+    [Header("Bone-dominant preset")]
+    [Tooltip("If true, ApplyBoneDominantPreset() will also reduce non-bone rewards (root/upright/height/alive) to near-zero.")]
+    public bool boneDominantPresetSuppressShaping = true;
+
     [Tooltip("Small per-step reward to encourage staying alive (e.g. 0.001).")]
     public float aliveReward = 0.001f;
+
+    [Header("Reward output")]
+    [Tooltip("If true, converts costs into a bounded positive reward via exp(-cost). This is usually more stable for PPO than raw negative costs.")]
+    public bool useExponentialReward = true;
+
+    [Tooltip("Scale applied to the final reward added each step (after exp).")]
+    public float rewardScale = 1.0f;
+
+    [Tooltip("If > 0, adds a small positive reward each step to avoid flatlining when costs are near zero.")]
+    public float aliveRewardPerStep = 0.0f;
 
     [Header("Optional action penalties")]
     [Tooltip("Penalty scale for mean squared action magnitude.")]
@@ -99,11 +171,26 @@ public class ImitationAgent : Agent
     public float actionDeltaL2Penalty = 0.0f;
 
     [Tooltip("Penalty scale for squared reference-frame linear+angular velocity (useful for Idle imitation).")]
-    public float motionL2Penalty = 0.0f;
+    public float motionL2Penalty = 0.01f;
+
+    [Tooltip("Relative weight for angular velocity inside the motion penalty. (rad/s)^2 is often much larger than (m/s)^2.")]
+    public float motionAngularWeight = 0.05f;
+
+    [Tooltip("Only apply motion penalty when pose cost is already below this threshold (prevents discouraging corrective motion when far from target).")]
+    public float motionPoseGateCost = 0.06f;
+
+    [Tooltip("Clamp the raw motion cost to avoid huge gradients during falls/collisions.")]
+    public float motionCostClamp = 5.0f;
 
     [Header("Reward sharpness")]
     public float kRot = 12f;   // higher = stricter tracking
     public float kPos = 25f;
+
+    [Tooltip("Sharpness for per-bone position tracking. Higher = stricter pose matching. Typical range: 20-200 depending on rig scale.")]
+    public float kBonePos = 80f;
+
+    [Tooltip("Sharpness for per-bone rotation tracking. Higher = stricter rotation matching.")]
+    public float kBoneRot = 20f;
 
     [Tooltip("Sharpness for root/reference-frame position tracking.")]
     public float kRootPos = 10f;
@@ -122,13 +209,17 @@ public class ImitationAgent : Agent
     [Tooltip("End episode if tipped longer than this many seconds.")]
     public float maxTippedTime = 1.0f;
 
-    [Header("Episode length")]
-    [Tooltip("If > 0, end the episode after this many seconds (physics time).")]
-    public float maxEpisodeSeconds = 2.0f;
+    private const float EpisodeSeconds = 5.0f;
 
     [Header("Reset")]
     public bool snapStudentToTeacherOnReset = true;
     public bool randomizeTeacherPhaseOnReset = false;
+
+    [Tooltip("If true, explicitly sets the teacher to a known normalized time at the start of every episode (deterministic resets).")]
+    public bool forceTeacherTimeOnReset = true;
+
+    [Range(0f, 1f)]
+    public float teacherNormalizedTimeOnReset = 0f;
 
     [Tooltip("If true, applies a random impulse on reset to force the policy to learn balance/standing.")]
     public bool applyRandomImpulseOnReset = true;
@@ -153,7 +244,43 @@ public class ImitationAgent : Agent
     private float[] _prevActions;
     private float _episodeTimer;
 
+    private Vector3 _rootOffsetInTeacherFrameOnReset;
+
     private bool _didLogFirstObservation;
+
+    // Smoothly blend control authority in at the start of each episode.
+    // This avoids violent initial corrections when the ragdoll spawns already near the target pose.
+    private const float ActionRampSeconds = 0.50f;
+
+    [ContextMenu("Apply Bone-Dominant Reward Preset")]
+    public void ApplyBoneDominantPreset()
+    {
+        // Make bone-level accuracy dominate.
+        wBonePos = 2.0f;
+        wBoneRot = 2.0f;
+        kBonePos = 120f;
+        kBoneRot = 40f;
+
+        // Put extra emphasis on the front half.
+        bonePosWeightArms = 4.0f;
+        bonePosWeightHead = 4.0f;
+        bonePosWeightTorso = 2.0f;
+        rotWeightArms = 4.0f;
+        rotWeightHead = 4.0f;
+        rotWeightTorso = 2.0f;
+
+        // Keep end-effector tracking relevant but secondary.
+        wPos = 0.10f;
+        wRot = 0.10f;
+
+        if (boneDominantPresetSuppressShaping)
+        {
+            wRootPos = 0.0f;
+            wUpright = 0.02f;
+            wHeight = 0.02f;
+            aliveReward = 0.0f;
+        }
+    }
 
     public override void Initialize()
     {
@@ -183,11 +310,22 @@ public class ImitationAgent : Agent
         if (logFirstObservationEachEpisode)
             _didLogFirstObservation = false;
 
-        if (randomizeTeacherPhaseOnReset)
+        // Ensure teacher pose is explicitly sampled at the episode boundary.
+        // Without this, the teacher Animator can drift forward in real time between episodes,
+        // making two runs with "the same settings" start from different poses.
+        if (teacher != null)
         {
-            // Works when TeacherPoseProvider has an Animator reference + state name set.
-            teacher.TrySetNormalizedTime(UnityEngine.Random.value);
+            if (randomizeTeacherPhaseOnReset)
+                teacher.TrySetNormalizedTime(UnityEngine.Random.value);
+            else if (forceTeacherTimeOnReset)
+                teacher.TrySetNormalizedTime(teacherNormalizedTimeOnReset);
         }
+
+        // IMPORTANT: clear any stale actions from the previous episode.
+        // If the DecisionRequester is not every FixedUpdate, the joint controller can otherwise
+        // apply the last episode's action for a few physics ticks, injecting energy.
+        if (controller != null)
+            controller.SetZeroActionsNow();
 
         if (snapStudentToTeacherOnReset)
         {
@@ -196,6 +334,22 @@ public class ImitationAgent : Agent
         else
         {
             ResetRagdollVelocities();
+        }
+
+        // Apply any updated joint drive tuning (spring/damper/maxForce) at a clean boundary.
+        // This makes it easy to tweak values during Play Mode and see them take effect next episode.
+        if (controller != null)
+            controller.ApplyJointDriveSettingsIfDirty();
+
+        // Cache initial root offset in the teacher reference frame so root tracking is robust
+        // even when the teacher/ghost rig is placed elsewhere in the scene.
+        if (teacherReferenceFrame != null && studentReferenceFrame != null)
+        {
+            _rootOffsetInTeacherFrameOnReset = teacherReferenceFrame.InverseTransformPoint(studentReferenceFrame.position);
+        }
+        else
+        {
+            _rootOffsetInTeacherFrameOnReset = Vector3.zero;
         }
 
         // Create a balancing problem: without disturbances the task can be too trivial and rewards flat-line.
@@ -270,6 +424,20 @@ public class ImitationAgent : Agent
             sensor.AddObservation(qt.z);
             sensor.AddObservation(qt.w);
         }
+    }
+
+    public override void Heuristic(in ActionBuffers actionsOut)
+    {
+        // When BehaviorParameters is set to Default and no model is assigned, ML-Agents will
+        // fall back to the HeuristicPolicy. Implementing this prevents the log spam:
+        // "Heuristic method called but not implemented. Returning placeholder actions."
+        var continuous = actionsOut.ContinuousActions;
+        for (int i = 0; i < continuous.Length; i++)
+            continuous[i] = 0f;
+
+        var discrete = actionsOut.DiscreteActions;
+        for (int i = 0; i < discrete.Length; i++)
+            discrete[i] = 0;
     }
 
     string BuildFirstObservationSnapshot()
@@ -377,213 +545,201 @@ public class ImitationAgent : Agent
         // Send actions to controller
         var a = actions.ContinuousActions;
         float[] act = new float[a.Length];
-        for (int i = 0; i < a.Length; i++) act[i] = a[i];
+        float actionScale = (ActionRampSeconds > 0f) ? Mathf.Clamp01(_episodeTimer / ActionRampSeconds) : 1f;
+        for (int i = 0; i < a.Length; i++) act[i] = a[i] * actionScale;
         controller.SetActions(act);
 
-        // Reward: rotation alignment
-        float rotErr = 0f;
+        // COST (minimize):
+        // 1) For each bound bone: squared distance between student and teacher bone positions expressed in each rig's reference frame.
+        // 2) For each bound bone: squared deviation between student and teacher bone rotations relative to parent.
+        // 3) Optional stillness term: penalize reference-frame linear+angular velocity (prevents gyration around a pose).
+        // 4) Root/upright/height shaping: crucial to prevent collapse or in-place imitation for locomotion.
+        float posCostWeightedSum = 0f;
+        float posWeightSum = 0f;
+        float rotCostWeightedSum = 0f;
+        float rotWeightSum = 0f;
+        float posMaxSqr = 0f;
+        float rotMaxRad = 0f;
+        int boneCount = 0;
+
         foreach (var b in _bindings)
         {
-            float ang = Quaternion.Angle(b.studentBone.localRotation, b.teacherBone.localRotation) / 180f;
-            rotErr += ang * ang;
+            if (b == null || b.studentBone == null || b.teacherBone == null) continue;
+
+            // Position cost: compare bone positions in a stable reference frame.
+            // IMPORTANT: comparing absolute world positions only works if teacher+student rigs are co-located.
+            // In practice the teacher/ghost is often placed elsewhere in the scene, so we compare positions in
+            // each rig's reference frame (pose-relative, but still derived from world positions).
+            float posW = GetBonePosWeight(b.boneName);
+            Vector3 ps = (studentReferenceFrame != null)
+                ? studentReferenceFrame.InverseTransformPoint(b.studentBone.position)
+                : b.studentBone.position;
+            Vector3 pt = (teacherReferenceFrame != null)
+                ? teacherReferenceFrame.InverseTransformPoint(b.teacherBone.position)
+                : b.teacherBone.position;
+
+            Vector3 ds = ps - pt;
+            float posSqr = ds.sqrMagnitude;
+            posCostWeightedSum += posW * posSqr;
+            posWeightSum += posW;
+            if (posSqr > posMaxSqr) posMaxSqr = posSqr;
+
+            // Rotation cost: compare child rotation relative to its parent.
+            Transform sp = b.studentBone.parent;
+            Transform tp = b.teacherBone.parent;
+            if (sp == null || tp == null) continue;
+
+            float rotW = GetRotWeight(b.boneName);
+            Quaternion qsRel = Quaternion.Inverse(sp.rotation) * b.studentBone.rotation;
+            Quaternion qtRel = Quaternion.Inverse(tp.rotation) * b.teacherBone.rotation;
+            float angRad = Quaternion.Angle(qsRel, qtRel) * Mathf.Deg2Rad;
+            rotCostWeightedSum += rotW * (angRad * angRad);
+            rotWeightSum += rotW;
+            if (angRad > rotMaxRad) rotMaxRad = angRad;
+
+            boneCount++;
         }
-        rotErr /= Mathf.Max(1, _bindings.Count);
-        float rRot = Mathf.Exp(-kRot * rotErr);
 
-        // Reward: end-effector position alignment (pelvis-local)
-        float posErr = 0f;
-        int n = 0;
-        posErr += EffErr(studentHandL, _teacherHandL, ref n);
-        posErr += EffErr(studentHandR, _teacherHandR, ref n);
-        posErr += EffErr(studentFootL, _teacherFootL, ref n);
-        posErr += EffErr(studentFootR, _teacherFootR, ref n);
+        float posCost = (posWeightSum > 0f) ? (posCostWeightedSum / posWeightSum) : 0f;
+        float rotCost = (rotWeightSum > 0f) ? (rotCostWeightedSum / rotWeightSum) : 0f;
 
-        posErr /= Mathf.Max(1, n);
-        float rPos = Mathf.Exp(-kPos * posErr);
-
-        // Reward: root/reference-frame absolute position alignment
-        float rootErr = 0f;
-        if (studentReferenceFrame != null)
+        // Root tracking: keep the student reference frame (pelvis/chest/root) aligned with the teacher's.
+        // This is key for locomotion imitation (otherwise the agent can match pose in-place).
+        float rootPosCost = 0f;
+        if (teacherReferenceFrame != null && studentReferenceFrame != null)
         {
-            if (teacherReferenceFrame != null)
+            Vector3 rootOffsetNow = teacherReferenceFrame.InverseTransformPoint(studentReferenceFrame.position);
+            Vector3 delta = rootOffsetNow - _rootOffsetInTeacherFrameOnReset;
+            rootPosCost = delta.sqrMagnitude; // meters^2
+        }
+
+        // Height tracking: match reference-frame height relative to teacher.
+        float heightCost = 0f;
+        if (teacherReferenceFrame != null)
+        {
+            Transform hRef = studentReferenceFrame;
+            Transform tRef = teacherReferenceFrame;
+            if (hRef != null && tRef != null)
             {
-                // Express student reference position in teacher reference frame.
-                Vector3 d = teacherReferenceFrame.InverseTransformPoint(studentReferenceFrame.position);
-                rootErr = d.sqrMagnitude;
+                float dy = (hRef.position.y - tRef.position.y);
+                heightCost = dy * dy;
             }
+        }
+
+        // Upright: encourage staying oriented similarly to world-up.
+        float uprightCost = 0f;
+        {
+            Transform uRef = studentReferenceFrame;
+            if (uRef != null)
+            {
+                float uprightDot = Mathf.Clamp(Vector3.Dot(uRef.up, Vector3.up), -1f, 1f);
+                // Convert to a smooth cost in [0, 4] (when dot=-1 => cost 4).
+                float c = 1f - uprightDot;
+                uprightCost = c * c;
+            }
+        }
+
+        // Stillness penalty (in a stable frame). For Idle imitation this helps remove oscillation.
+        float motionCost = 0f;
+        float motionCostClamped = 0f;
+        float motionGate = 0f;
+        float motionLinSpeed = 0f;
+        float motionAngSpeed = 0f;
+        if (motionL2Penalty > 0f && studentReferenceRb != null)
+        {
+            Transform frame = teacherReferenceFrame != null ? teacherReferenceFrame : studentReferenceFrame;
+            Vector3 v = studentReferenceRb.linearVelocity;
+            Vector3 w = studentReferenceRb.angularVelocity;
+            if (frame != null)
+            {
+                v = frame.InverseTransformDirection(v);
+                w = frame.InverseTransformDirection(w);
+            }
+
+            motionLinSpeed = v.magnitude;
+            motionAngSpeed = w.magnitude;
+            motionCost = v.sqrMagnitude + motionAngularWeight * w.sqrMagnitude;
+
+            // Gate stillness so it doesn't fight necessary corrective movement when the pose is bad.
+            // Gate = 0 when far from target, approaches 1 as pose gets close.
+            float poseCostRaw = posCost + rotCost;
+            if (motionPoseGateCost > 1e-6f)
+                motionGate = Mathf.Clamp01(1f - (poseCostRaw / motionPoseGateCost));
             else
-            {
-                // Fallback: world-space distance to teacher root (if teacher exists) else 0.
-                if (teacher != null)
-                {
-                    rootErr = (studentReferenceFrame.position - teacher.transform.position).sqrMagnitude;
-                }
-            }
+                motionGate = 1f;
+
+            // Clamp to avoid blow-ups from impacts/falls.
+            motionCostClamped = Mathf.Min(motionCost, Mathf.Max(0f, motionCostClamp));
         }
 
-        float rRootPos = (kRootPos > 0f) ? Mathf.Exp(-kRootPos * rootErr) : 0f;
+        float totalCost =
+            boneLocalPosCostScale * posCost +
+            boneLocalRotCostScale * rotCost +
+            motionL2Penalty * motionGate * motionCostClamped +
+            wRootPos * rootPosCost +
+            wHeight * heightCost +
+            wUpright * uprightCost;
 
-        // Reward: upright (encourages standing/balance)
-        float upright01 = 0f;
-        float uprightDot = 0f;
-        float rUpright = 0f;
-        if (studentPelvis != null && studentHead != null)
+        float reward;
+        if (useExponentialReward)
         {
-            Vector3 upDir = (studentHead.position - studentPelvis.position);
-            if (upDir.sqrMagnitude > 1e-6f)
-            {
-                upDir.Normalize();
-                uprightDot = Vector3.Dot(upDir, Vector3.up);
-            }
+            // Bounded in (0, 1]. Larger cost -> smaller reward.
+            reward = Mathf.Exp(-costToRewardScale * totalCost) * rewardScale;
         }
         else
         {
-            // Quadruped-friendly fallback: compute a torso "up" from bone positions.
-            // lateral: right-left (prefer hips/upper legs, else clavicles)
-            // forward: chest-spine (or head-spine)
-            Vector3? left = (studentUpperLegL != null) ? studentUpperLegL.position : (studentClavicleL != null ? studentClavicleL.position : (Vector3?)null);
-            Vector3? right = (studentUpperLegR != null) ? studentUpperLegR.position : (studentClavicleR != null ? studentClavicleR.position : (Vector3?)null);
-
-            Vector3? spineP = (studentSpine != null) ? studentSpine.position : (Vector3?)null;
-            Vector3? chestP = (studentChest != null) ? studentChest.position : (Vector3?)null;
-            Vector3? headP = (studentHead != null) ? studentHead.position : (Vector3?)null;
-
-            if (left.HasValue && right.HasValue && spineP.HasValue && (chestP.HasValue || headP.HasValue))
-            {
-                Vector3 lateral = (right.Value - left.Value);
-                Vector3 forward = (chestP.HasValue ? (chestP.Value - spineP.Value) : (headP.Value - spineP.Value));
-
-                if (lateral.sqrMagnitude > 1e-6f && forward.sqrMagnitude > 1e-6f)
-                {
-                    lateral.Normalize();
-                    forward.Normalize();
-                    Vector3 up = Vector3.Cross(lateral, forward);
-                    if (up.sqrMagnitude > 1e-6f)
-                    {
-                        up.Normalize();
-                        // Force the computed up to be the one closer to world up.
-                        if (Vector3.Dot(up, Vector3.up) < 0f) up = -up;
-                        uprightDot = Vector3.Dot(up, Vector3.up);
-                    }
-                }
-            }
-
-            // Last resort: use reference transform axis.
-            if (uprightDot == 0f && studentReferenceFrame != null)
-                uprightDot = Vector3.Dot(studentReferenceFrame.up, Vector3.up);
+            // Raw negative cost (kept for backwards compatibility).
+            reward = -costToRewardScale * totalCost;
         }
 
-        if (studentReferenceFrame != null)
-        {
-            upright01 = Mathf.Clamp01(0.5f * (uprightDot + 1f));
-            // Penalize deviation from fully upright (uprightDot=1) using exp(-k * (1-u)^2)
-            float uErr = (1f - upright01);
-            rUpright = (kUpright > 0f) ? Mathf.Exp(-kUpright * uErr * uErr) : upright01;
-        }
+        if (aliveRewardPerStep > 0f)
+            reward += aliveRewardPerStep;
 
-        // Reward: height (encourages not collapsing)
-        float heightErr = 0f;
-        float rHeight = 0f;
-        if (studentPelvis != null)
-        {
-            float targetY = ( _teacherPelvis != null )
-                ? _teacherPelvis.position.y
-                : (teacherReferenceFrame != null ? teacherReferenceFrame.position.y : (teacher != null ? teacher.transform.position.y : studentPelvis.position.y));
+        AddReward(reward);
 
-            float dy = studentPelvis.position.y - targetY;
-            heightErr = dy * dy;
-            rHeight = (kHeight > 0f) ? Mathf.Exp(-kHeight * heightErr) : 0f;
-        }
-        else if (studentChest != null && studentSpine != null)
-        {
-            float torsoY = 0.5f * (studentChest.position.y + studentSpine.position.y);
-            float targetY;
-            if (_teacherChest != null && _teacherSpine != null)
-                targetY = 0.5f * (_teacherChest.position.y + _teacherSpine.position.y);
-            else if (teacherReferenceFrame != null)
-                targetY = teacherReferenceFrame.position.y;
-            else if (teacher != null)
-                targetY = teacher.transform.position.y;
-            else
-                targetY = torsoY;
+        // Human-interpretable diagnostics (Unity units are meters).
+        float posRmsM = Mathf.Sqrt(Mathf.Max(0f, posCost));
+        float posMaxM = Mathf.Sqrt(Mathf.Max(0f, posMaxSqr));
+        float rotRmsRad = Mathf.Sqrt(Mathf.Max(0f, rotCost));
+        float rotRmsDeg = rotRmsRad * Mathf.Rad2Deg;
+        float rotMaxDeg = rotMaxRad * Mathf.Rad2Deg;
 
-            float dy = torsoY - targetY;
-            heightErr = dy * dy;
-            rHeight = (kHeight > 0f) ? Mathf.Exp(-kHeight * heightErr) : 0f;
-        }
-
-        float total =
-            wRot * rRot +
-            wPos * rPos +
-            wRootPos * rRootPos +
-            wUpright * rUpright +
-            wHeight * rHeight +
-            aliveReward;
-
-        if (actionL2Penalty > 0f)
-        {
-            float l2 = 0f;
-            for (int i = 0; i < act.Length; i++) l2 += act[i] * act[i];
-            l2 /= Mathf.Max(1, act.Length);
-            total -= actionL2Penalty * l2;
-        }
-
-        if (actionDeltaL2Penalty > 0f)
-        {
-            float dl2 = 0f;
-            int nAct = Mathf.Min(act.Length, _prevActions.Length);
-            for (int i = 0; i < nAct; i++)
-            {
-                float d = act[i] - _prevActions[i];
-                dl2 += d * d;
-                _prevActions[i] = act[i];
-            }
-            dl2 /= Mathf.Max(1, nAct);
-            total -= actionDeltaL2Penalty * dl2;
-        }
-
-        if (motionL2Penalty > 0f && studentReferenceFrame != null && studentReferenceRb != null)
-        {
-            Vector3 vLocal = studentReferenceFrame.InverseTransformDirection(studentReferenceRb.linearVelocity);
-            Vector3 wLocal = studentReferenceFrame.InverseTransformDirection(studentReferenceRb.angularVelocity);
-            float v2 = vLocal.sqrMagnitude;
-            float w2 = wLocal.sqrMagnitude;
-            total -= motionL2Penalty * (v2 + w2);
-        }
-
-        AddReward(total);
-
-        // Stats for TensorBoard (helps diagnose plateaus)
+        // Stats for TensorBoard
         try
         {
             var stats = Academy.Instance.StatsRecorder;
-            stats.Add("imitation/rRot", rRot);
-            stats.Add("imitation/rPos", rPos);
-            stats.Add("imitation/rRootPos", rRootPos);
-            stats.Add("imitation/rUpright", rUpright);
-            stats.Add("imitation/rHeight", rHeight);
-            stats.Add("imitation/rotErr", rotErr);
-            stats.Add("imitation/posErr", posErr);
-            stats.Add("imitation/rootErr", rootErr);
-            stats.Add("imitation/upright01", upright01);
-            stats.Add("imitation/uprightDot", uprightDot);
-            stats.Add("imitation/heightErr", heightErr);
-            if (studentPelvis != null) stats.Add("imitation/pelvisY", studentPelvis.position.y);
+            stats.Add("imitation/costLocalPos", posCost);
+            stats.Add("imitation/costLocalRot", rotCost);
+            stats.Add("imitation/costTotal", totalCost);
+            stats.Add("imitation/reward", reward);
+            stats.Add("imitation/boneCount", boneCount);
+            stats.Add("imitation/actionScale", actionScale);
+            stats.Add("imitation/costWorldPos", posCost);
+            stats.Add("imitation/costParentRelRot", rotCost);
+            stats.Add("imitation/costMotion", motionCost);
+            stats.Add("imitation/costMotionClamped", motionCostClamped);
+            stats.Add("imitation/motionGate", motionGate);
+            stats.Add("imitation/motionLinSpeed", motionLinSpeed);
+            stats.Add("imitation/motionAngSpeed", motionAngSpeed);
+            stats.Add("imitation/costRootPos", rootPosCost);
+            stats.Add("imitation/costHeight", heightCost);
+            stats.Add("imitation/costUpright", uprightCost);
+            stats.Add("imitation/costLocalPosRmsCm", posRmsM * 100f);
+            stats.Add("imitation/costLocalPosMaxCm", posMaxM * 100f);
+            stats.Add("imitation/costLocalRotRmsDeg", rotRmsDeg);
+            stats.Add("imitation/costLocalRotMaxDeg", rotMaxDeg);
         }
         catch
         {
-            // Ignore (stats recorder may not be available in some contexts).
         }
 
         // Terminate if fallen (prefer pelvis height)
-        Transform fallRef = studentPelvis != null ? studentPelvis : (studentSpine != null ? studentSpine : studentReferenceFrame);
+        Transform fallRef = studentReferenceFrame;
         if (fallRef != null && fallRef.position.y < minPelvisHeight) EndEpisode();
 
         if (fallRef != null)
         {
-            float upright = (studentPelvis != null && studentHead != null)
-                ? uprightDot
-                : Vector3.Dot(fallRef.up, Vector3.up);
+            float upright = Vector3.Dot(fallRef.up, Vector3.up);
             if (upright < minUprightDot)
             {
                 _tippedTimer += Time.fixedDeltaTime;
@@ -598,11 +754,10 @@ public class ImitationAgent : Agent
 
     void FixedUpdate()
     {
-        if (maxEpisodeSeconds <= 0f) return;
         if (StepCount <= 0) return;
 
         _episodeTimer += Time.fixedDeltaTime;
-        if (_episodeTimer >= maxEpisodeSeconds)
+        if (_episodeTimer >= EpisodeSeconds)
         {
             EndEpisode();
         }
@@ -633,6 +788,68 @@ public class ImitationAgent : Agent
         return d * d;
     }
 
+    float EffErrWeighted(Transform studentEff, Transform teacherEff, float weight, ref float weightedErrSum, ref float weightSum)
+    {
+        if (studentEff == null || teacherEff == null) return 0f;
+        if (weight <= 0f) return 0f;
+
+        // IMPORTANT: compute in a stable frame (teacher frame preferred), not in the student's own frame.
+        Transform frame = teacherReferenceFrame != null ? teacherReferenceFrame : null;
+
+        Vector3 ps;
+        Vector3 pt;
+        if (frame != null)
+        {
+            ps = frame.InverseTransformPoint(studentEff.position);
+            pt = frame.InverseTransformPoint(teacherEff.position);
+        }
+        else
+        {
+            ps = studentEff.position;
+            pt = teacherEff.position;
+        }
+
+        float d = (ps - pt).magnitude;
+        float err = d * d;
+        weightedErrSum += weight * err;
+        weightSum += weight;
+        return err;
+    }
+
+    float GetRotWeight(string boneName)
+    {
+        if (string.IsNullOrEmpty(boneName)) return rotWeightDefault;
+        string n = boneName.ToLowerInvariant();
+
+        if (n.Contains("spine") || n.Contains("chest"))
+            return rotWeightDefault * rotWeightTorso;
+
+        if (n.Contains("head") || n.Contains("neck"))
+            return rotWeightDefault * rotWeightHead;
+
+        if (n.Contains("clav") || n.Contains("should") || n.Contains("upperarm") || n.Contains("lowerarm") || n.Contains("forearm") || n.Contains("elbow") || n.Contains("hand") || n.Contains("arm"))
+            return rotWeightDefault * rotWeightArms;
+
+        return rotWeightDefault;
+    }
+
+    float GetBonePosWeight(string boneName)
+    {
+        if (string.IsNullOrEmpty(boneName)) return bonePosWeightDefault;
+        string n = boneName.ToLowerInvariant();
+
+        if (n.Contains("spine") || n.Contains("chest"))
+            return bonePosWeightDefault * bonePosWeightTorso;
+
+        if (n.Contains("head") || n.Contains("neck"))
+            return bonePosWeightDefault * bonePosWeightHead;
+
+        if (n.Contains("clav") || n.Contains("should") || n.Contains("upperarm") || n.Contains("lowerarm") || n.Contains("forearm") || n.Contains("elbow") || n.Contains("hand") || n.Contains("arm"))
+            return bonePosWeightDefault * bonePosWeightArms;
+
+        return bonePosWeightDefault;
+    }
+
     void ResetRagdollVelocities()
     {
         // Reset all rigidbodies under student root
@@ -655,61 +872,84 @@ public class ImitationAgent : Agent
             controller.RebuildBindingsSafely();
         }
 
-        // Reference frame
+        // Reference frame + RB
         studentReferenceFrame = studentReferenceFrameOverride;
-        if (studentReferenceFrame == null)
-        {
-            studentReferenceFrame = ResolveStudentBone(referenceBoneNameCandidates) ?? controller.studentRoot;
-        }
-
-        teacherReferenceFrame = teacherReferenceFrameOverride;
-        if (teacherReferenceFrame == null)
-        {
-            teacherReferenceFrame = ResolveTeacherBone(referenceBoneNameCandidates) ?? teacher.transform;
-        }
-
-        // Reference RB
         studentReferenceRb = studentReferenceRigidbodyOverride;
-        if (studentReferenceRb == null && studentReferenceFrame != null)
+
+        if (skeletonAgnosticReferenceFrames)
         {
-            studentReferenceRb = studentReferenceFrame.GetComponent<Rigidbody>();
+            if (studentReferenceRb == null)
+                studentReferenceRb = controller.studentRoot.GetComponent<Rigidbody>() ?? controller.studentRoot.GetComponentInChildren<Rigidbody>();
+
+            if (studentReferenceFrame == null)
+                studentReferenceFrame = (studentReferenceRb != null) ? studentReferenceRb.transform : controller.studentRoot;
+
+            teacherReferenceFrame = teacherReferenceFrameOverride;
+            if (teacherReferenceFrame == null)
+            {
+                // Prefer mapping the chosen student reference bone by name if possible; otherwise use teacher root.
+                if (teacher.TryGetBone(studentReferenceFrame.name, out var mapped))
+                    teacherReferenceFrame = mapped;
+                else
+                    teacherReferenceFrame = teacher.transform;
+            }
         }
-        if (studentReferenceRb == null)
+        else
         {
-            studentReferenceRb = controller.studentRoot.GetComponentInChildren<Rigidbody>();
+            studentReferenceFrame = studentReferenceFrameOverride;
+            if (studentReferenceFrame == null)
+                studentReferenceFrame = ResolveStudentBone(referenceBoneNameCandidates) ?? controller.studentRoot;
+
+            teacherReferenceFrame = teacherReferenceFrameOverride;
+            if (teacherReferenceFrame == null)
+                teacherReferenceFrame = ResolveTeacherBone(referenceBoneNameCandidates) ?? teacher.transform;
+
+            if (studentReferenceRb == null && studentReferenceFrame != null)
+                studentReferenceRb = studentReferenceFrame.GetComponent<Rigidbody>();
+            if (studentReferenceRb == null)
+                studentReferenceRb = controller.studentRoot.GetComponentInChildren<Rigidbody>();
         }
 
-        // End effectors (student)
-        studentHandL = ResolveStudentBone(handLeftNameCandidates);
-        studentHandR = ResolveStudentBone(handRightNameCandidates);
-        studentFootL = ResolveStudentBone(footLeftNameCandidates);
-        studentFootR = ResolveStudentBone(footRightNameCandidates);
+        // End-effectors and special bones are optional. If your skeleton names change, the
+        // per-bone binding-based imitation reward still works without these.
+        if (!skeletonAgnosticReferenceFrames)
+        {
+            // End effectors (student)
+            studentHandL = ResolveStudentBone(handLeftNameCandidates);
+            studentHandR = ResolveStudentBone(handRightNameCandidates);
+            studentFootL = ResolveStudentBone(footLeftNameCandidates);
+            studentFootR = ResolveStudentBone(footRightNameCandidates);
+            studentElbowL = ResolveStudentBone(elbowLeftNameCandidates);
+            studentElbowR = ResolveStudentBone(elbowRightNameCandidates);
 
-        // Upright/height bones (student)
-        studentPelvis = ResolveStudentBone(pelvisNameCandidates);
-        studentHead = ResolveStudentBone(headNameCandidates);
+            // Upright/height bones (student)
+            studentPelvis = ResolveStudentBone(pelvisNameCandidates);
+            studentHead = ResolveStudentBone(headNameCandidates);
 
-        // Quadruped torso/axes bones (student)
-        studentChest = ResolveStudentBone(chestNameCandidates);
-        studentSpine = ResolveStudentBone(spineNameCandidates);
-        studentUpperLegL = ResolveStudentBone(upperLegLeftNameCandidates);
-        studentUpperLegR = ResolveStudentBone(upperLegRightNameCandidates);
-        studentClavicleL = ResolveStudentBone(clavicleLeftNameCandidates);
-        studentClavicleR = ResolveStudentBone(clavicleRightNameCandidates);
+            // Quadruped torso/axes bones (student)
+            studentChest = ResolveStudentBone(chestNameCandidates);
+            studentSpine = ResolveStudentBone(spineNameCandidates);
+            studentUpperLegL = ResolveStudentBone(upperLegLeftNameCandidates);
+            studentUpperLegR = ResolveStudentBone(upperLegRightNameCandidates);
+            studentClavicleL = ResolveStudentBone(clavicleLeftNameCandidates);
+            studentClavicleR = ResolveStudentBone(clavicleRightNameCandidates);
 
-        // End effectors (teacher)
-        _teacherHandL = ResolveTeacherBone(handLeftNameCandidates);
-        _teacherHandR = ResolveTeacherBone(handRightNameCandidates);
-        _teacherFootL = ResolveTeacherBone(footLeftNameCandidates);
-        _teacherFootR = ResolveTeacherBone(footRightNameCandidates);
+            // End effectors (teacher)
+            _teacherHandL = ResolveTeacherBone(handLeftNameCandidates);
+            _teacherHandR = ResolveTeacherBone(handRightNameCandidates);
+            _teacherFootL = ResolveTeacherBone(footLeftNameCandidates);
+            _teacherFootR = ResolveTeacherBone(footRightNameCandidates);
+            _teacherElbowL = ResolveTeacherBone(elbowLeftNameCandidates);
+            _teacherElbowR = ResolveTeacherBone(elbowRightNameCandidates);
 
-        // Upright/height bones (teacher)
-        _teacherPelvis = ResolveTeacherBone(pelvisNameCandidates);
-        _teacherHead = ResolveTeacherBone(headNameCandidates);
+            // Upright/height bones (teacher)
+            _teacherPelvis = ResolveTeacherBone(pelvisNameCandidates);
+            _teacherHead = ResolveTeacherBone(headNameCandidates);
 
-        // Quadruped torso (teacher)
-        _teacherChest = ResolveTeacherBone(chestNameCandidates);
-        _teacherSpine = ResolveTeacherBone(spineNameCandidates);
+            // Quadruped torso (teacher)
+            _teacherChest = ResolveTeacherBone(chestNameCandidates);
+            _teacherSpine = ResolveTeacherBone(spineNameCandidates);
+        }
     }
 
     Transform ResolveStudentBone(string[] candidates)

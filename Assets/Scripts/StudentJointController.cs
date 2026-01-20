@@ -42,6 +42,13 @@ public class StudentJointController : MonoBehaviour
     [Tooltip("Max degrees for non-hinge per-axis offset actions (pitch/yaw/roll).")]
     public float ballMaxOffsetDeg = 10f;
 
+    [Tooltip("If true, applies bone-name-based hinge axis overrides (elbow/knee/etc). In most rigs this hurts; prefer using the computed axis from the joint.")]
+    public bool useBoneNameHingeAxisOverrides = false;
+
+    [Header("Teacher mapping")]
+    [Tooltip("If true, applies the teacher's local rotation *delta from its bind pose* onto the student's bind pose. This is recommended when teacher and student rigs have different rest orientations (common cause of arms drifting/backwards).")]
+    public bool applyTeacherDeltaFromBindPose = true;
+
     [Header("Joint drive (recommended)")]
     [Tooltip("If true, configures ConfigurableJoint rotational drives at runtime so targetRotation actually actuates the ragdoll.")]
     public bool autoConfigureJointDrives = true;
@@ -54,6 +61,53 @@ public class StudentJointController : MonoBehaviour
 
     [Tooltip("Max force for the joint rotational drive.")]
     public float jointDriveMaxForce = 1000f;
+
+    [Header("Drive ramp (recommended)")]
+    [Tooltip("Ramps joint drive strength from 0 to 1 over this many seconds after a reset. Helps prevent 'springing' energy when the ragdoll teleports to a new pose.")]
+    public float driveRampSeconds = 0.25f;
+
+    [Header("Reset")]
+    [Tooltip("If true, SnapToTeacherPose will temporarily set all ragdoll rigidbodies kinematic and disable collisions while teleporting to avoid explosive impulses carrying across resets.")]
+    public bool hardSnapDisablesCollisions = true;
+
+    [Tooltip("If true, performs the hard snap over two phases across a FixedUpdate (teleport while kinematic + collisions off, then restore next physics tick). This helps prevent contact solver explosions from persisting across resets.")]
+    public bool hardSnapTwoPhase = true;
+
+    [Tooltip("If true, SnapToTeacherPose will zero velocities for ALL rigidbodies under the student root (not just those name-mapped to the teacher).")]
+    public bool snapZeroesAllRigidbodies = true;
+
+    [Tooltip("If true, snaps rigidbody poses using the joint bindings (student bone -> teacher bone) instead of relying on name-mapped rigidbodies. This is more reliable for ragdolls where only some bones have rigidbodies.")]
+    public bool snapUsingBindings = true;
+
+    [Tooltip("If true, automatically reapplies joint drive settings when values change (checked on episode begin via ImitationAgent).")]
+    public bool reapplyDrivesWhenChanged = true;
+
+    [Tooltip("If true, changing drive values in the Inspector during Play Mode will immediately reapply them.")]
+    public bool reapplyDrivesOnValidateInPlayMode = false;
+
+    private float _lastAppliedSpring = float.NaN;
+    private float _lastAppliedDamper = float.NaN;
+    private float _lastAppliedMaxForce = float.NaN;
+
+    private float _driveRampTimer;
+    private float _lastAppliedDriveScale = float.NaN;
+
+    private Coroutine _hardSnapRoutine;
+
+    struct JointState
+    {
+        public ConfigurableJoint joint;
+        public ConfigurableJointMotion xMotion, yMotion, zMotion;
+        public ConfigurableJointMotion angularXMotion, angularYMotion, angularZMotion;
+        public RotationDriveMode rotationDriveMode;
+        public JointDrive slerpDrive;
+        public JointDrive angularXDrive;
+        public JointDrive angularYZDrive;
+        public bool enablePreprocessing;
+        public JointProjectionMode projectionMode;
+        public float projectionDistance;
+        public float projectionAngle;
+    }
 
     [Header("Debug")]
     [Tooltip("If true, ignores incoming actions and applies zero offsets (pure teacher tracking).")]
@@ -78,7 +132,7 @@ public class StudentJointController : MonoBehaviour
         EnsureInitialized(logIfEmpty: true);
 
         if (autoConfigureJointDrives)
-            ConfigureJointDrives();
+            ApplyJointDriveSettingsNow(force: true);
 
         _zeroActions = new float[GetActionSize()];
     }
@@ -90,20 +144,46 @@ public class StudentJointController : MonoBehaviour
         {
             EnsureInitialized(logIfEmpty: true);
             if (autoConfigureJointDrives)
-                ConfigureJointDrives();
+                ApplyJointDriveSettingsNow(force: true);
             _zeroActions = new float[GetActionSize()];
         }
     }
 
-    void ConfigureJointDrives()
+    [ContextMenu("Apply Joint Drive Settings Now")]
+    public void ApplyJointDriveSettingsNow(bool force = false)
+    {
+        if (!autoConfigureJointDrives) return;
+        if (bindings == null) return;
+
+        if (!force && !reapplyDrivesWhenChanged)
+            return;
+
+        if (!force &&
+            Mathf.Approximately(_lastAppliedSpring, jointDriveSpring) &&
+            Mathf.Approximately(_lastAppliedDamper, jointDriveDamper) &&
+            Mathf.Approximately(_lastAppliedMaxForce, jointDriveMaxForce))
+        {
+            return;
+        }
+
+        ApplyJointDriveSettingsScaled(1.0f);
+
+        _lastAppliedSpring = jointDriveSpring;
+        _lastAppliedDamper = jointDriveDamper;
+        _lastAppliedMaxForce = jointDriveMaxForce;
+        _lastAppliedDriveScale = 1.0f;
+    }
+
+    void ApplyJointDriveSettingsScaled(float scale)
     {
         if (bindings == null) return;
 
+        float s = Mathf.Max(0f, scale);
         var drive = new JointDrive
         {
-            positionSpring = jointDriveSpring,
-            positionDamper = jointDriveDamper,
-            maximumForce = jointDriveMaxForce
+            positionSpring = jointDriveSpring * s,
+            positionDamper = jointDriveDamper * s,
+            maximumForce = jointDriveMaxForce * s
         };
 
         foreach (var b in bindings)
@@ -116,11 +196,46 @@ public class StudentJointController : MonoBehaviour
         }
     }
 
+    public void ApplyJointDriveSettingsIfDirty()
+    {
+        ApplyJointDriveSettingsNow(force: false);
+    }
+
+    /// <summary>
+    /// Call on episode begin / reset to prevent joints from applying a large impulse.
+    /// It (1) resets the drive ramp and (2) sets joint targets to match the CURRENT pose.
+    /// </summary>
+    public void NotifyEpisodeResetBoundary()
+    {
+        _driveRampTimer = 0f;
+        _lastAppliedDriveScale = float.NaN;
+        MatchJointTargetsToCurrentPose();
+
+        // Start with drives at 0 (or small) and ramp up.
+        if (autoConfigureJointDrives)
+            ApplyJointDriveSettingsScaled(0f);
+    }
+
+    void MatchJointTargetsToCurrentPose()
+    {
+        if (bindings == null) return;
+        foreach (var b in bindings)
+        {
+            if (b == null || b.joint == null || b.studentBone == null) continue;
+            JointTargetRotationUtil.SetTargetRotationLocal(b.joint, b.studentBone.localRotation, b.studentStartLocalRot);
+        }
+    }
+
 #if UNITY_EDITOR
     void OnValidate()
     {
         // Keep zero-action buffer valid when bindings are edited in the inspector.
-        if (Application.isPlaying) return;
+        if (Application.isPlaying)
+        {
+            if (reapplyDrivesOnValidateInPlayMode)
+                ApplyJointDriveSettingsNow(force: true);
+            return;
+        }
         if (bindings == null) return;
         _zeroActions = new float[GetActionSize()];
     }
@@ -318,19 +433,18 @@ public class StudentJointController : MonoBehaviour
         Quaternion jointToLocal = Quaternion.LookRotation(joint.axis, joint.secondaryAxis);
         Vector3 axisInBoneLocal = jointToLocal * Vector3.right; // Assuming hinge rotates around X in joint space
 
-        // Common hinge joints with reasonable default axes (in bone local space)
+        if (!useBoneNameHingeAxisOverrides)
+            return axisInBoneLocal;
+
+        // Optional: bone-name heuristics (only if explicitly enabled)
         string lowerName = boneName.ToLower();
-        
+
         if (lowerName.Contains("elbow"))
-            return Vector3.forward; // Elbows typically bend forward/back
-        
+            return Vector3.forward;
+
         if (lowerName.Contains("knee"))
-            return Vector3.right; // Knees typically bend around right axis
-        
-        if (lowerName.Contains("shoulder") || lowerName.Contains("hip"))
-            return axisInBoneLocal; // Use computed axis for ball joints treated as hinges
-        
-        // Default fallback
+            return Vector3.right;
+
         return axisInBoneLocal;
     }
 
@@ -380,14 +494,186 @@ public class StudentJointController : MonoBehaviour
         _latestActions = null;
     }
 
+    public void SetZeroActionsNow()
+    {
+        // Critical for clean episode resets: prevents reusing the previous episode's last action
+        // for one or more physics ticks (DecisionRequester period > 1), which can inject energy.
+        if (_zeroActions == null || _zeroActions.Length != GetActionSize())
+            _zeroActions = new float[GetActionSize()];
+        _latestActions = _zeroActions;
+    }
+
     public void SnapToTeacherPose(bool resetVelocities = true)
     {
-        // Align all rigidbodies that can be name-mapped (most ragdolls)
+        if (studentRoot == null) studentRoot = transform;
+
+        if (hardSnapDisablesCollisions && hardSnapTwoPhase && Application.isPlaying)
+        {
+            if (_hardSnapRoutine != null) StopCoroutine(_hardSnapRoutine);
+            _hardSnapRoutine = StartCoroutine(HardSnapCoroutine(resetVelocities));
+            return;
+        }
+
+        // Optional hard snap: disable collisions + make kinematic during teleport.
+        // This prevents an already-exploding ragdoll (deep interpenetration, high velocity) from immediately exploding again after reset.
+        Rigidbody[] allRbs = studentRoot.GetComponentsInChildren<Rigidbody>();
+        var jointStates = CaptureAndFreeAllJoints();
+        bool[] prevKinematic = null;
+        bool[] prevDetect = null;
+
+        if (hardSnapDisablesCollisions)
+        {
+            prevKinematic = new bool[allRbs.Length];
+            prevDetect = new bool[allRbs.Length];
+
+            for (int i = 0; i < allRbs.Length; i++)
+            {
+                var rb = allRbs[i];
+                prevKinematic[i] = rb.isKinematic;
+                prevDetect[i] = rb.detectCollisions;
+                rb.detectCollisions = false;
+                rb.isKinematic = true;
+            }
+        }
+
+        // Align rigidbodies to the teacher pose.
+        ApplyPoseSnap();
+
+        // Make sure the transform hierarchy reflects teleported rigidbodies before touching joint targets.
+        Physics.SyncTransforms();
+
+        // Ensure joints are not trying to pull toward a stale target.
+        NotifyEpisodeResetBoundary();
+
+        if (resetVelocities)
+        {
+            if (snapZeroesAllRigidbodies)
+            {
+                foreach (var rb in allRbs)
+                {
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                }
+            }
+            else
+            {
+                ZeroVelocitiesForSnappedBodies();
+            }
+        }
+
+        Physics.SyncTransforms();
+
+        if (hardSnapDisablesCollisions)
+        {
+            for (int i = 0; i < allRbs.Length; i++)
+            {
+                var rb = allRbs[i];
+                rb.isKinematic = prevKinematic[i];
+                rb.detectCollisions = prevDetect[i];
+            }
+        }
+
+        RestoreAllJoints(jointStates);
+
+        if (resetVelocities)
+        {
+            foreach (var rb in allRbs)
+                rb.Sleep();
+        }
+
+        Physics.SyncTransforms();
+    }
+
+    void ApplyPoseSnap()
+    {
+        if (teacher == null) return;
+
+        // Snap ALL rigidbodies we can map, using both:
+        // - joint bindings (accurate for driven bones)
+        // - name-mapped rigidbodies (covers extra bodies that may not have joints/bindings)
+        var seen = new HashSet<Rigidbody>();
+
+        if (snapUsingBindings && bindings != null && bindings.Count > 0)
+        {
+            foreach (var b in bindings)
+            {
+                if (b == null || b.studentBone == null || b.teacherBone == null) continue;
+                var rb = b.studentBone.GetComponent<Rigidbody>();
+                if (rb == null) continue;
+                if (!seen.Add(rb)) continue;
+
+                rb.position = b.teacherBone.position;
+                rb.rotation = b.teacherBone.rotation;
+            }
+        }
+
         foreach (var (rb, teacherBone) in _rbPoseBindings)
         {
+            if (rb == null || teacherBone == null) continue;
+            if (!seen.Add(rb)) continue;
             rb.position = teacherBone.position;
             rb.rotation = teacherBone.rotation;
+        }
+    }
 
+    void ZeroVelocitiesForSnappedBodies()
+    {
+        if (snapUsingBindings && bindings != null && bindings.Count > 0)
+        {
+            var seen = new HashSet<Rigidbody>();
+            foreach (var b in bindings)
+            {
+                if (b == null || b.studentBone == null) continue;
+                var rb = b.studentBone.GetComponent<Rigidbody>();
+                if (rb == null) continue;
+                if (!seen.Add(rb)) continue;
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
+            return;
+        }
+
+        foreach (var (rb, _) in _rbPoseBindings)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+    }
+
+    System.Collections.IEnumerator HardSnapCoroutine(bool resetVelocities)
+    {
+        if (studentRoot == null) studentRoot = transform;
+
+        var allRbs = studentRoot.GetComponentsInChildren<Rigidbody>();
+        var jointStates = CaptureAndFreeAllJoints();
+        var prevKinematic = new bool[allRbs.Length];
+        var prevDetect = new bool[allRbs.Length];
+
+        for (int i = 0; i < allRbs.Length; i++)
+        {
+            var rb = allRbs[i];
+            prevKinematic[i] = rb.isKinematic;
+            prevDetect[i] = rb.detectCollisions;
+            rb.detectCollisions = false;
+            rb.isKinematic = true;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        ApplyPoseSnap();
+        Physics.SyncTransforms();
+
+    // Now that transforms are correct, align joint targets to the current pose and ramp drives.
+    NotifyEpisodeResetBoundary();
+
+        // Let the physics engine observe the teleported pose with collisions disabled.
+        yield return new WaitForFixedUpdate();
+
+        for (int i = 0; i < allRbs.Length; i++)
+        {
+            var rb = allRbs[i];
+            rb.isKinematic = prevKinematic[i];
+            rb.detectCollisions = prevDetect[i];
             if (resetVelocities)
             {
                 rb.linearVelocity = Vector3.zero;
@@ -396,7 +682,110 @@ public class StudentJointController : MonoBehaviour
             }
         }
 
+        RestoreAllJoints(jointStates);
         Physics.SyncTransforms();
+        _hardSnapRoutine = null;
+    }
+
+    List<JointState> CaptureAndFreeAllJoints()
+    {
+        var joints = studentRoot.GetComponentsInChildren<ConfigurableJoint>();
+        var states = new List<JointState>(joints.Length);
+
+        // Zero drive used while joints are temporarily freed.
+        var zeroDrive = new JointDrive { positionSpring = 0f, positionDamper = 0f, maximumForce = 0f };
+
+        foreach (var j in joints)
+        {
+            if (j == null) continue;
+
+            states.Add(new JointState
+            {
+                joint = j,
+                xMotion = j.xMotion,
+                yMotion = j.yMotion,
+                zMotion = j.zMotion,
+                angularXMotion = j.angularXMotion,
+                angularYMotion = j.angularYMotion,
+                angularZMotion = j.angularZMotion,
+                rotationDriveMode = j.rotationDriveMode,
+                slerpDrive = j.slerpDrive,
+                angularXDrive = j.angularXDrive,
+                angularYZDrive = j.angularYZDrive,
+                enablePreprocessing = j.enablePreprocessing,
+                projectionMode = j.projectionMode,
+                projectionDistance = j.projectionDistance,
+                projectionAngle = j.projectionAngle
+            });
+
+            // Free all constraints during teleport.
+            j.xMotion = ConfigurableJointMotion.Free;
+            j.yMotion = ConfigurableJointMotion.Free;
+            j.zMotion = ConfigurableJointMotion.Free;
+            j.angularXMotion = ConfigurableJointMotion.Free;
+            j.angularYMotion = ConfigurableJointMotion.Free;
+            j.angularZMotion = ConfigurableJointMotion.Free;
+
+            // Remove any drive impulses.
+            j.rotationDriveMode = RotationDriveMode.Slerp;
+            j.slerpDrive = zeroDrive;
+            j.angularXDrive = zeroDrive;
+            j.angularYZDrive = zeroDrive;
+
+            // Avoid joint preprocessing/projection pushing bodies during the teleport frame.
+            j.enablePreprocessing = false;
+            j.projectionMode = JointProjectionMode.None;
+        }
+
+        return states;
+    }
+
+    void RestoreAllJoints(List<JointState> states)
+    {
+        if (states == null) return;
+        foreach (var s in states)
+        {
+            if (s.joint == null) continue;
+
+            s.joint.xMotion = s.xMotion;
+            s.joint.yMotion = s.yMotion;
+            s.joint.zMotion = s.zMotion;
+            s.joint.angularXMotion = s.angularXMotion;
+            s.joint.angularYMotion = s.angularYMotion;
+            s.joint.angularZMotion = s.angularZMotion;
+            s.joint.rotationDriveMode = s.rotationDriveMode;
+            s.joint.slerpDrive = s.slerpDrive;
+            s.joint.angularXDrive = s.angularXDrive;
+            s.joint.angularYZDrive = s.angularYZDrive;
+            s.joint.enablePreprocessing = s.enablePreprocessing;
+            s.joint.projectionMode = s.projectionMode;
+            s.joint.projectionDistance = s.projectionDistance;
+            s.joint.projectionAngle = s.projectionAngle;
+        }
+    }
+
+    void Update()
+    {
+        // Drive ramp uses scaled drives. Update() runs even when no Agent decisions happen.
+        if (!autoConfigureJointDrives) return;
+        if (driveRampSeconds <= 1e-6f) return;
+
+        // Ramp timer in real time; FixedUpdate may not run if time scale is 0.
+        _driveRampTimer += Time.deltaTime;
+    }
+
+    void LateUpdate()
+    {
+        // Apply ramp scaling at most once per frame.
+        if (!autoConfigureJointDrives) return;
+        if (driveRampSeconds <= 1e-6f) return;
+
+        float t = Mathf.Clamp01(_driveRampTimer / driveRampSeconds);
+        if (!float.IsNaN(_lastAppliedDriveScale) && Mathf.Abs(_lastAppliedDriveScale - t) < 0.02f)
+            return;
+
+        ApplyJointDriveSettingsScaled(t);
+        _lastAppliedDriveScale = t;
     }
 
     void FixedUpdate()
@@ -410,6 +799,16 @@ public class StudentJointController : MonoBehaviour
         {
             // Reference pose from teacher (bone local rotation)
             Quaternion teacherLocal = b.teacherBone.localRotation;
+
+            // Map teacher pose onto student bind pose.
+            // Teacher: R_t = R_t0 * Δ  => Δ = inv(R_t0) * R_t
+            // Student target: R_s = R_s0 * Δ
+            Quaternion mappedTeacherLocal = teacherLocal;
+            if (applyTeacherDeltaFromBindPose)
+            {
+                Quaternion delta = Quaternion.Inverse(b.teacherStartLocalRot) * teacherLocal;
+                mappedTeacherLocal = b.studentStartLocalRot * delta;
+            }
 
             // Create offset from actions
             Quaternion offset;
@@ -430,7 +829,7 @@ public class StudentJointController : MonoBehaviour
             }
 
             // Target local rotation: reference * offset
-            Quaternion targetLocal = teacherLocal * offset;
+            Quaternion targetLocal = mappedTeacherLocal * offset;
 
             // Apply to joint.targetRotation (joint space conversion)
             JointTargetRotationUtil.SetTargetRotationLocal(b.joint, targetLocal, b.studentStartLocalRot);

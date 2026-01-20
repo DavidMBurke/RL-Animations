@@ -2,23 +2,74 @@ behaviors:
   MonkeyImitation:
     trainer_type: ppo
     hyperparameters:
-      batch_size: 1024
-      buffer_size: 10240
-      learning_rate: 3.0e-4
-      beta: 5.0e-4
+      # How many experiences are used per gradient update.
+      # Larger = smoother/more stable updates, but more compute/VRAM per update.
+      batch_size: 2048
+
+      # How many experiences are collected before each learning update.
+      # Must be >= batch_size. Larger = more diverse samples, slower update cadence.
+      buffer_size: 20480
+
+      # Adam step size.
+      # Higher = bigger updates (faster learning, higher risk of collapse).
+      # Lower this first if training becomes unstable or reward suddenly worsens.
+      learning_rate: 2.0e-4
+
+      # Entropy regularization (encourages exploration).
+      # Higher = more randomness; helps avoid premature convergence but can slow precision.
+      beta: 2.0e-3
+
+      # PPO clip range (trust region size).
+      # Higher = larger policy steps allowed; lower = safer/smaller steps.
       epsilon: 0.2
+
+      # GAE(λ) bias/variance tradeoff for advantage estimates.
+      # Closer to 1.0 = better long-horizon credit assignment, but noisier updates.
       lambd: 0.95
+
+      # Number of passes over the buffer per update.
+      # Higher = more learning per env step, but can overfit/instabilize.
       num_epoch: 3
+
+      # Schedules over max_steps.
+      # linear: start at given value and decay toward 0 by max_steps.
+      # constant: keep value fixed (useful if you don't want annealing).
       learning_rate_schedule: linear
+      beta_schedule: linear
+      epsilon_schedule: linear
     network_settings:
+      # Normalize vector observations online; usually improves stability.
       normalize: true
+
+      # MLP width (capacity). Increase if underfitting; decrease if too slow/overfitting.
       hidden_units: 256
+
+      # MLP depth (capacity/compute).
       num_layers: 2
+
+      # Visual encoder type (only relevant if you use visual observations).
       vis_encode_type: simple
     reward_signals:
       extrinsic:
+        # Discount factor. Closer to 1.0 emphasizes long-term reward.
         gamma: 0.995
+
+        # Multiplier applied to the extrinsic reward signal.
         strength: 1.0
-    max_steps: 2.0e7
+
+    # Total training steps for this run-id.
+    # Note: linear schedules use this to determine how fast they anneal.
+    max_steps: 1.0e8
+
+    # How often (in steps) to save checkpoints.
+    checkpoint_interval: 250000
+
+    # How many checkpoints to retain (older ones are deleted). Increase for easier rollbacks.
+    keep_checkpoints: 50
+
+    # Trajectory length used for advantage/value targets.
+    # Larger helps longer behaviors, but increases variance.
     time_horizon: 128
+
+    # How often to write TensorBoard summaries.
     summary_freq: 5000
