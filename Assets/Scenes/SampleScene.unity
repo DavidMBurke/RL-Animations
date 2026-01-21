@@ -794,38 +794,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_RenderShadows: 1
-  m_RequiresDepthTextureOption: 2
-  m_RequiresOpaqueTextureOption: 2
-  m_CameraType: 0
-  m_Cameras: []
-  m_RendererIndex: -1
-  m_VolumeLayerMask:
-    serializedVersion: 2
-    m_Bits: 1
-  m_VolumeTrigger: {fileID: 0}
-  m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 0
-  m_Antialiasing: 0
-  m_AntialiasingQuality: 2
-  m_StopNaN: 0
-  m_Dithering: 0
-  m_ClearDepth: 1
-  m_AllowXRRendering: 1
-  m_AllowHDROutput: 1
-  m_UseScreenCoordOverride: 0
-  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
-  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
-  m_RequiresDepthTexture: 0
-  m_RequiresColorTexture: 0
-  m_TaaSettings:
-    m_Quality: 3
-    m_FrameInfluence: 0.1
-    m_JitterScale: 1
-    m_MipBias: 0
-    m_VarianceClampScale: 0.9
-    m_ContrastAdaptiveSharpening: 0
-  m_Version: 2
 --- !u!20 &519420031
 Camera:
   m_ObjectHideFlags: 0
@@ -859,7 +827,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 34
+  field of view: 55
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -942,46 +910,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 073797afb82c5a1438f328866b10b3f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_ComponentVersion: 2
-  m_LightType: 4
-  m_BlendStyleIndex: 0
-  m_FalloffIntensity: 0.5
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 1
-  m_LightVolumeIntensity: 1
-  m_LightVolumeEnabled: 0
-  m_ApplyToSortingLayers: 00000000
-  m_LightCookieSprite: {fileID: 0}
-  m_DeprecatedPointLightCookieSprite: {fileID: 0}
-  m_LightOrder: 0
-  m_AlphaBlendOnOverlap: 0
-  m_OverlapOperation: 0
-  m_NormalMapDistance: 3
-  m_NormalMapQuality: 2
-  m_UseNormalMap: 0
-  m_ShadowsEnabled: 0
-  m_ShadowIntensity: 0.75
-  m_ShadowSoftness: 0
-  m_ShadowSoftnessFalloffIntensity: 0.5
-  m_ShadowVolumeIntensityEnabled: 0
-  m_ShadowVolumeIntensity: 0.75
-  m_LocalBounds:
-    m_Center: {x: 0, y: -0.00000011920929, z: 0}
-    m_Extent: {x: 0.9985302, y: 0.99853027, z: 0}
-  m_PointLightInnerAngle: 360
-  m_PointLightOuterAngle: 360
-  m_PointLightInnerRadius: 0
-  m_PointLightOuterRadius: 1
-  m_ShapeLightParametricSides: 5
-  m_ShapeLightParametricAngleOffset: 0
-  m_ShapeLightParametricRadius: 1
-  m_ShapeLightFalloffSize: 0.5
-  m_ShapeLightFalloffOffset: {x: 0, y: 0}
-  m_ShapePath:
-  - {x: -0.5, y: -0.5, z: 0}
-  - {x: 0.5, y: -0.5, z: 0}
-  - {x: 0.5, y: 0.5, z: 0}
-  - {x: -0.5, y: 0.5, z: 0}
 --- !u!4 &619394802
 Transform:
   m_ObjectHideFlags: 0
@@ -1022,7 +950,9 @@ MonoBehaviour:
   teacherRoot: {fileID: 621042642}
   animator: {fileID: 621042644}
   animatorLayer: 0
-  animatorStateName: Idle_Stand
+  animatorStateName: BeamWalk
+  enforceAnimatorPhysicsSync: 1
+  freezeAnimatorTime: 0
 --- !u!95 &621042644
 Animator:
   serializedVersion: 7
@@ -1033,7 +963,7 @@ Animator:
   m_GameObject: {fileID: 621042641}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 0a0b1c5c354019c48bc5047d3c2e9b0a, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 1
   m_ApplyRootMotion: 0
@@ -2986,6 +2916,10 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 45575fae81dafd940b97672ac28201ec, type: 2}
+    - target: {fileID: 8922514488003212297, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.01561162
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: -7703705806790764321, guid: 3644e0f051213f04dba6cad475127439, type: 3}
@@ -3003,6 +2937,126 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 621042644}
   m_SourcePrefab: {fileID: 100100000, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+--- !u!4 &1423193516 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1337400985622894037, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193517 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -2340937280215631864, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193518 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5126415240549054167, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193519 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2182485050214585117, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193520 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8622543925168161091, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193521 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7612475462367715434, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193522 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2820347116610082806, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193523 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7837612354572388670, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193524 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4115020765590101375, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193525 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8878936111627691813, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193526 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8228954235359250967, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193527 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2569309148142122881, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193528 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -6402836136151974871, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193529 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4906333604512128357, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193530 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1603851215950487127, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193531 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 610147082333991117, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193532 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -1769612651633253511, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193533 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 879711535477164657, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193534 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8128320082059119145, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193535 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3876465642478860211, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193536 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1920147356588903991, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193537 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -3602272071636797011, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193538 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8922514488003212297, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1423193539 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4517537661194151420, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 1423193515}
+  m_PrefabAsset: {fileID: 0}
 --- !u!153 &1483355541
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -3432,6 +3486,121 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!4 &1765483936 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -2340937280215631864, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483937 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5126415240549054167, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483938 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2182485050214585117, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483939 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8622543925168161091, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483940 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7612475462367715434, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483941 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2820347116610082806, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483942 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7837612354572388670, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483943 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4115020765590101375, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483944 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8878936111627691813, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483945 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8228954235359250967, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483946 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2569309148142122881, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483947 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -6402836136151974871, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483948 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4906333604512128357, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483949 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1603851215950487127, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483950 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 610147082333991117, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483951 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -1769612651633253511, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483952 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 879711535477164657, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483953 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8128320082059119145, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483954 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3876465642478860211, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483955 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1920147356588903991, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483956 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -3602272071636797011, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483957 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8922514488003212297, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1765483958 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4517537661194151420, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
 --- !u!54 &1767173244
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -3802,7 +3971,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 3644e0f051213f04dba6cad475127439, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 3.88
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 3644e0f051213f04dba6cad475127439, type: 3}
       propertyPath: m_LocalPosition.y
@@ -4179,6 +4348,11 @@ PrefabInstance:
 --- !u!1 &2124933586 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 3644e0f051213f04dba6cad475127439, type: 3}
+  m_PrefabInstance: {fileID: 2124933585}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &2124933587 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1337400985622894037, guid: 3644e0f051213f04dba6cad475127439, type: 3}
   m_PrefabInstance: {fileID: 2124933585}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &2124933588 stripped
@@ -4757,13 +4931,238 @@ MonoBehaviour:
   studentRoot: {fileID: 2130072245}
   teacher: {fileID: 621042643}
   autoDetectJoints: 1
-  bindings: []
+  bindings:
+  - boneName: Chest
+    joint: {fileID: 2124933621}
+    studentBone: {fileID: 1765483958}
+    teacherBone: {fileID: 1423193539}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: 0.99994564, y: -0.008088628, z: -0.00044329657, w: -0.0065647145}
+    teacherStartLocalRot: {x: 0.99994564, y: -0.008088628, z: -0.00044329657, w: -0.0065647145}
+    studentBaseLocalRot: {x: 0.99994564, y: -0.008088628, z: -0.00044329657, w: -0.0065647145}
+  - boneName: Clavicle.L
+    joint: {fileID: 2124933620}
+    studentBone: {fileID: 1765483957}
+    teacherBone: {fileID: 1423193538}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: 0.49258345, y: -0.11133213, z: 0.6892581, w: 0.51950943}
+    teacherStartLocalRot: {x: 0.49258345, y: -0.11133213, z: 0.6892581, w: 0.51950943}
+    studentBaseLocalRot: {x: 0.49258345, y: -0.11133213, z: 0.6892581, w: 0.51950943}
+  - boneName: UpperArm.L
+    joint: {fileID: 242229708}
+    studentBone: {fileID: 1765483956}
+    teacherBone: {fileID: 1423193537}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: 0.32635936, y: -0.03249899, z: -0.35679713, w: 0.87471664}
+    teacherStartLocalRot: {x: 0.32635936, y: -0.03249899, z: -0.35679713, w: 0.87471664}
+    studentBaseLocalRot: {x: 0.32635936, y: -0.03249899, z: -0.35679713, w: 0.87471664}
+  - boneName: LowerArm.L
+    joint: {fileID: 1578986871}
+    studentBone: {fileID: 1765483955}
+    teacherBone: {fileID: 1423193536}
+    isHinge: 1
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: -0.10778542, y: 0.03581721, z: -0.28202194, w: 0.9526611}
+    teacherStartLocalRot: {x: -0.10778542, y: 0.03581721, z: -0.28202194, w: 0.9526611}
+    studentBaseLocalRot: {x: -0.10778542, y: 0.03581721, z: -0.28202194, w: 0.9526611}
+  - boneName: Hand.L
+    joint: {fileID: 34909388}
+    studentBone: {fileID: 1765483954}
+    teacherBone: {fileID: 1423193535}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: -0.14805956, y: 0.077048555, z: -0.5586691, w: 0.81242275}
+    teacherStartLocalRot: {x: -0.14805956, y: 0.077048555, z: -0.5586691, w: 0.81242275}
+    studentBaseLocalRot: {x: -0.14805956, y: 0.077048555, z: -0.5586691, w: 0.81242275}
+  - boneName: Fingers.L
+    joint: {fileID: 1313838696}
+    studentBone: {fileID: 1765483953}
+    teacherBone: {fileID: 1423193534}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: 0.0801951, y: 0.07718107, z: 0.12304829, w: 0.9861394}
+    teacherStartLocalRot: {x: 0.057079542, y: -0.032087233, z: 0.1310834, w: 0.9892065}
+    studentBaseLocalRot: {x: 0.0801951, y: 0.07718107, z: 0.12304829, w: 0.9861394}
+  - boneName: Clavicle.R
+    joint: {fileID: 1072560658}
+    studentBone: {fileID: 1765483952}
+    teacherBone: {fileID: 1423193533}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: 0.4937825, y: 0.10375179, z: -0.6979588, w: 0.50820065}
+    teacherStartLocalRot: {x: 0.4937825, y: 0.10375179, z: -0.6979588, w: 0.50820065}
+    studentBaseLocalRot: {x: 0.4937825, y: 0.10375179, z: -0.6979588, w: 0.50820065}
+  - boneName: UpperArm.R
+    joint: {fileID: 1328708845}
+    studentBone: {fileID: 1765483951}
+    teacherBone: {fileID: 1423193532}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: 0.3263593, y: 0.032499194, z: 0.3567972, w: 0.87471664}
+    teacherStartLocalRot: {x: 0.3263593, y: 0.032499194, z: 0.3567972, w: 0.87471664}
+    studentBaseLocalRot: {x: 0.3263593, y: 0.032499194, z: 0.3567972, w: 0.87471664}
+  - boneName: LowerArm.R
+    joint: {fileID: 1198619865}
+    studentBone: {fileID: 1765483950}
+    teacherBone: {fileID: 1423193531}
+    isHinge: 1
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: -0.10778558, y: -0.03581721, z: 0.28202188, w: 0.9526611}
+    teacherStartLocalRot: {x: -0.10778558, y: -0.03581721, z: 0.28202188, w: 0.9526611}
+    studentBaseLocalRot: {x: -0.10778558, y: -0.03581721, z: 0.28202188, w: 0.9526611}
+  - boneName: Hand.R
+    joint: {fileID: 1196867775}
+    studentBone: {fileID: 1765483949}
+    teacherBone: {fileID: 1423193530}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: -0.14805982, y: -0.07704841, z: 0.5586691, w: 0.8124228}
+    teacherStartLocalRot: {x: -0.14805982, y: -0.07704841, z: 0.5586691, w: 0.8124228}
+    studentBaseLocalRot: {x: -0.14805982, y: -0.07704841, z: 0.5586691, w: 0.8124228}
+  - boneName: Fingers.R
+    joint: {fileID: 133097529}
+    studentBone: {fileID: 1765483948}
+    teacherBone: {fileID: 1423193529}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: 0.0801951, y: -0.07718107, z: -0.12304829, w: 0.9861394}
+    teacherStartLocalRot: {x: 0.057079494, y: 0.03208694, z: -0.13108331, w: 0.98920655}
+    studentBaseLocalRot: {x: 0.0801951, y: -0.07718107, z: -0.12304829, w: 0.9861394}
+  - boneName: Neck
+    joint: {fileID: 873958297}
+    studentBone: {fileID: 1765483947}
+    teacherBone: {fileID: 1423193528}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: -0.5011277, y: 0.0019607258, z: -0.09345144, w: 0.86031044}
+    teacherStartLocalRot: {x: -0.5011277, y: 0.0019607258, z: -0.09345144, w: 0.86031044}
+    studentBaseLocalRot: {x: -0.5011277, y: 0.0019607258, z: -0.09345144, w: 0.86031044}
+  - boneName: Head
+    joint: {fileID: 2071948063}
+    studentBone: {fileID: 1765483946}
+    teacherBone: {fileID: 1423193527}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: 0.60142815, y: -0.00000004737731, z: 0.094129786, w: 0.7933623}
+    teacherStartLocalRot: {x: 0.60142815, y: -0.00000004737731, z: 0.094129786, w: 0.7933623}
+    studentBaseLocalRot: {x: 0.60142815, y: -0.00000004737731, z: 0.094129786, w: 0.7933623}
+  - boneName: Spine
+    joint: {fileID: 750618795}
+    studentBone: {fileID: 1765483945}
+    teacherBone: {fileID: 1423193526}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: 0.98380923, y: -0.0034556147, z: 0.17756918, w: 0.024013856}
+    teacherStartLocalRot: {x: 0.98380923, y: -0.0034556147, z: 0.17756918, w: 0.024013856}
+    studentBaseLocalRot: {x: 0.98380923, y: -0.0034556147, z: 0.17756918, w: 0.024013856}
+  - boneName: UpperLeg.L
+    joint: {fileID: 636671773}
+    studentBone: {fileID: 1765483944}
+    teacherBone: {fileID: 1423193525}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: -0.81523675, y: -0.108252876, z: 0.1473152, w: 0.54951674}
+    teacherStartLocalRot: {x: -0.81523675, y: -0.108252876, z: 0.1473152, w: 0.54951674}
+    studentBaseLocalRot: {x: -0.81523675, y: -0.108252876, z: 0.1473152, w: 0.54951674}
+  - boneName: LowerLeg.L
+    joint: {fileID: 2108051505}
+    studentBone: {fileID: 1765483943}
+    teacherBone: {fileID: 1423193524}
+    isHinge: 1
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: 0.21674113, y: 0.8427164, z: 0.44447336, w: -0.21282811}
+    teacherStartLocalRot: {x: 0.21674113, y: 0.8427164, z: 0.44447336, w: -0.21282811}
+    studentBaseLocalRot: {x: 0.21674113, y: 0.8427164, z: 0.44447336, w: -0.21282811}
+  - boneName: Foot.L
+    joint: {fileID: 747594560}
+    studentBone: {fileID: 1765483942}
+    teacherBone: {fileID: 1423193523}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: 0.865539, y: 0.032634974, z: 0.08050807, w: 0.49325016}
+    teacherStartLocalRot: {x: 0.865539, y: 0.032634974, z: 0.08050807, w: 0.49325016}
+    studentBaseLocalRot: {x: 0.865539, y: 0.032634974, z: 0.08050807, w: 0.49325016}
+  - boneName: UpperLeg.R
+    joint: {fileID: 1483355541}
+    studentBone: {fileID: 1765483941}
+    teacherBone: {fileID: 1423193522}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: -0.7081856, y: -0.093274616, z: -0.4210067, w: 0.55904055}
+    teacherStartLocalRot: {x: -0.7081856, y: -0.093274616, z: -0.4210067, w: 0.55904055}
+    studentBaseLocalRot: {x: -0.7081856, y: -0.093274616, z: -0.4210067, w: 0.55904055}
+  - boneName: LowerLeg.R
+    joint: {fileID: 992764956}
+    studentBone: {fileID: 1765483940}
+    teacherBone: {fileID: 1423193521}
+    isHinge: 1
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: -0.21584636, y: 0.846604, z: 0.43775782, w: 0.2122266}
+    teacherStartLocalRot: {x: -0.21584636, y: 0.846604, z: 0.43775782, w: 0.2122266}
+    studentBaseLocalRot: {x: -0.21584636, y: 0.846604, z: 0.43775782, w: 0.2122266}
+  - boneName: Foot.R
+    joint: {fileID: 948780718}
+    studentBone: {fileID: 1765483939}
+    teacherBone: {fileID: 1423193520}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: 0.8655391, y: -0.0326347, z: -0.08050691, w: 0.49325016}
+    teacherStartLocalRot: {x: 0.8655391, y: -0.0326347, z: -0.08050691, w: 0.49325016}
+    studentBaseLocalRot: {x: 0.8655391, y: -0.0326347, z: -0.08050691, w: 0.49325016}
+  - boneName: UpperTail
+    joint: {fileID: 1609923716}
+    studentBone: {fileID: 1765483938}
+    teacherBone: {fileID: 1423193519}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: 0.13382484, y: 0.8262257, z: -0.540343, w: 0.086437486}
+    teacherStartLocalRot: {x: 0.13382484, y: 0.8262257, z: -0.540343, w: 0.086437486}
+    studentBaseLocalRot: {x: 0.13382484, y: 0.8262257, z: -0.540343, w: 0.086437486}
+  - boneName: UpperTail2
+    joint: {fileID: 201132831}
+    studentBone: {fileID: 1765483937}
+    teacherBone: {fileID: 1423193518}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: -0.05209482, y: -0.02585601, z: -0.001850394, w: 0.9983057}
+    teacherStartLocalRot: {x: -0.05209482, y: -0.02585601, z: -0.001850394, w: 0.9983057}
+    studentBaseLocalRot: {x: -0.05209482, y: -0.02585601, z: -0.001850394, w: 0.9983057}
+  - boneName: MidTail
+    joint: {fileID: 1129848668}
+    studentBone: {fileID: 1765483936}
+    teacherBone: {fileID: 1423193517}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: -0.4531056, y: -0.16032296, z: 0.053248245, w: 0.8753037}
+    teacherStartLocalRot: {x: -0.4531056, y: -0.16032296, z: 0.053248245, w: 0.8753037}
+    studentBaseLocalRot: {x: -0.4531056, y: -0.16032296, z: 0.053248245, w: 0.8753037}
+  - boneName: TailTip
+    joint: {fileID: 1026246274}
+    studentBone: {fileID: 2124933587}
+    teacherBone: {fileID: 1423193516}
+    isHinge: 0
+    hingeAxisLocal: {x: -0.00000011920929, y: 0, z: -1.0000001}
+    studentStartLocalRot: {x: -0.10622189, y: 0.13889153, z: 0.019939698, w: 0.98439246}
+    teacherStartLocalRot: {x: -0.107813664, y: 0.024673376, z: 0.007580348, w: 0.99383605}
+    studentBaseLocalRot: {x: -0.10622189, y: 0.13889153, z: 0.019939698, w: 0.98439246}
   hingeMaxOffsetDeg: 20
   ballMaxOffsetDeg: 10
+  useBoneNameHingeAxisOverrides: 0
+  applyTeacherDeltaFromBindPose: 1
   autoConfigureJointDrives: 1
   jointDriveSpring: 1500
   jointDriveDamper: 80
   jointDriveMaxForce: 1000
+  driveRampSeconds: 0.25
+  hardSnapDisablesCollisions: 1
+  hardSnapTwoPhase: 1
+  snapZeroesAllRigidbodies: 1
+  snapUsingBindings: 1
+  reapplyDrivesWhenChanged: 1
+  reapplyDrivesOnValidateInPlayMode: 0
   forceZeroActions: 0
 --- !u!114 &2130072242
 MonoBehaviour:
@@ -4805,6 +5204,7 @@ MonoBehaviour:
   studentReferenceFrameOverride: {fileID: 0}
   studentReferenceRigidbodyOverride: {fileID: 0}
   teacherReferenceFrameOverride: {fileID: 0}
+  skeletonAgnosticReferenceFrames: 1
   referenceBoneNameCandidates:
   - pelvis
   - Pelvis
@@ -4848,6 +5248,22 @@ MonoBehaviour:
   - RightFoot
   - R_Foot
   - Foot.R
+  elbowLeftNameCandidates:
+  - Elbow.L
+  - Elbow_L
+  - elbow_L
+  - LowerArm.L
+  - LowerArm_L
+  - Forearm.L
+  - Forearm_L
+  elbowRightNameCandidates:
+  - Elbow.R
+  - Elbow_R
+  - elbow_R
+  - LowerArm.R
+  - LowerArm_R
+  - Forearm.R
+  - Forearm_R
   pelvisNameCandidates:
   - Pelvis
   - pelvis
@@ -4893,6 +5309,8 @@ MonoBehaviour:
   studentHandR: {fileID: 0}
   studentFootL: {fileID: 0}
   studentFootR: {fileID: 0}
+  studentElbowL: {fileID: 0}
+  studentElbowR: {fileID: 0}
   studentPelvis: {fileID: 0}
   studentHead: {fileID: 0}
   studentChest: {fileID: 0}
@@ -4903,24 +5321,51 @@ MonoBehaviour:
   studentClavicleR: {fileID: 0}
   wRot: 0.7
   wPos: 0.25
+  wBonePos: 0.2
+  wBoneRot: 0.35
+  boneLocalPosCostScale: 5
+  boneLocalRotCostScale: 1
+  costToRewardScale: 1
   wRootPos: 0.05
   wUpright: 0.15
   wHeight: 0.1
+  posWeightHands: 2
+  posWeightFeet: 1
+  posWeightHead: 1.5
+  posWeightElbows: 1.25
+  rotWeightDefault: 1
+  rotWeightArms: 2
+  rotWeightHead: 2
+  rotWeightTorso: 1.5
+  bonePosWeightDefault: 1
+  bonePosWeightArms: 2
+  bonePosWeightHead: 6
+  bonePosWeightTorso: 1.5
+  boneDominantPresetSuppressShaping: 1
   aliveReward: 0.001
+  useExponentialReward: 1
+  rewardScale: 1
+  aliveRewardPerStep: 0
   actionL2Penalty: 0
   actionDeltaL2Penalty: 0
   motionL2Penalty: 0
+  motionAngularWeight: 0.05
+  motionPoseGateCost: 0.06
+  motionCostClamp: 5
   kRot: 12
   kPos: 25
+  kBonePos: 80
+  kBoneRot: 20
   kRootPos: 10
   kUpright: 6
   kHeight: 10
-  minPelvisHeight: 0.2
+  minPelvisHeight: -0.5
   minUprightDot: 0.5
   maxTippedTime: 1
-  maxEpisodeSeconds: 2
   snapStudentToTeacherOnReset: 1
   randomizeTeacherPhaseOnReset: 0
+  forceTeacherTimeOnReset: 1
+  teacherNormalizedTimeOnReset: 0
   applyRandomImpulseOnReset: 1
   resetImpulseStrength: 6
   resetImpulseVerticalMix: 0.1
@@ -4939,7 +5384,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.ML-Agents::Unity.MLAgents.Policies.BehaviorParameters
   m_BrainParameters:
-    VectorObservationSize: 12
+    VectorObservationSize: 204
     NumStackedVectorObservations: 1
     m_ActionSpec:
       m_NumContinuousActions: 64
